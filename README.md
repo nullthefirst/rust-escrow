@@ -1,2 +1,2 @@
 # rust-escrow
-Simple escrow implementation in Rust using Soroban and Axum.
+Simple escrow implementation in Rust using Soroban blockchain.
