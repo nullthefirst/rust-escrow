@@ -34,4 +34,19 @@ impl EscrowContract {
 
     log!(&env, "ESCROW_CREATED")
   }
+
+  // release funds
+  pub fn release_funds(env: Env, escrow_id: String) {
+    let mut escrow: Escrow = env.storage().instance().get(&escrow_id).unwrap();
+
+    if escrow.released {
+      panic!("Already released!");
+    }
+
+    escrow.released = true;
+
+    env.storage().instance().set(&escrow_id, &escrow);
+
+    log!(&env, "ESCROW_RELEASED")
+  }
 }
