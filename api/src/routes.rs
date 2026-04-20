@@ -1,4 +1,4 @@
-use axum::{Router, routing::post};
+use axum::{Router, routing::{get, post}};
 use std::sync::Arc;
 use mongodb::Database;
 
@@ -11,6 +11,7 @@ pub fn create_routes(
 ) -> Router {
 
   Router::new()
+    .route("/health", get(|| async { "API Live!" }))
     .route("/escrow", post(escrow_handler::create))
     .with_state((db, config))
 
