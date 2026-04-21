@@ -5,7 +5,7 @@ pub fn invoke(
   source: &str,
   network: &str,
   function: &str,
-  args: Vec<&str, String>,
+  args: Vec<(&str, String)>,
 ) -> Result<String, String> {
   let mut cmd = Command::new("stellar");
 
@@ -19,7 +19,7 @@ pub fn invoke(
   ]);
 
   for (key, value) in args {
-    cmd.args(format!("{}", key)).arg(val);
+    cmd.arg(key).arg(value);
   }
 
   let output = cmd.output().map_err(|e| e.to_string())?;

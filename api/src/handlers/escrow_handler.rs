@@ -1,10 +1,8 @@
-use axum::{Extract::State, Json};
-use std::sync::Arc;
-use mongodb::Database;
+use axum::{extract::State, Json,response::IntoResponse, http::StatusCode};
 
+use crate::handlers::AppState;
 use crate::models::escrow::Escrow;
 use crate::services::{escrow_service, soroban_cli};
-use crate::config::Config;
 
 #[derive(serde::Deserialize)]
 pub struct CreateEscrowRequest {
@@ -13,25 +11,42 @@ pub struct CreateEscrowRequest {
 }
 
 pub async fn create(
-  State((db, config)): State<(Arc<Database>, Config)>,
+  State(state): State<AppState>,
   Json(payload): Json<CreateEscrowRequest>,
-) -> Json<Escrow> {
+) -> impl IntoResponse {
   let escrow = Escrow::new(payload.job_id.clone(), payload.amount);
 
-  let _ = soroban_cli::invoke(
-    &config.contract_id,
-    &config.source,
-    &config.network,
+  let invoke_result = soroban_cli::invoke(
+    &state.config.contract_id,
+    &state.config.source,
+    &state.config.network,
     "create_escrow",
     vec![
       ("escrow_id", escrow.id.clone()),
-      ("job_id", payload.job_id()),
+      ("job_id", payload.job_id),
       ("payload", (payload.amount as i128).to_string()),
     ],
   );
 
-  let col = db.Collection::<Escrows>("escrows");
-  escrow_service::save(col, escrow::clone()).await;
+  match invoke_result {
+    Ok(output) => {
+      println!("Soroban Invoke Success: {}", output);
 
-  Json(escrow)
+      let col = state.db.collection::<Escrow>("escrows");
+
+      if let Err(e) = escrow_service::save(col, escrow.clone()).await {
+        eprintln!("Database Error: {}", e);
+
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to save into database").into_response();
+      }
+
+      (StatusCode::CREATED, Json(escrow)).into_response()
+    }
+
+    Err(err) => {
+      eprintln!("Soroban Invoke Error: {}", err);
+
+      (StatusCode::BAD_REQUEST, format!("Contract execution failed: {}", err)).into_response()
+    }
+  }
 }

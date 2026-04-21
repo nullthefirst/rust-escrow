@@ -9,7 +9,7 @@ pub struct Escrow {
   pub status: String,
 }
 
-impl Struct {
+impl Escrow {
   pub fn new(job_id: String, amount: f64) -> Self {
     Self {
       id: Uuid::new_v4().to_string(),

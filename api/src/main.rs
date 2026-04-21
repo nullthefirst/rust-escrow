@@ -1,5 +1,6 @@
 use dotenv::dotenv;
-use axum::{Router, routing::{get, post}};
+
+use crate::handlers::AppState;
 
 mod config;
 mod db;
@@ -16,8 +17,14 @@ async fn main() {
     let config = config::Config::from_env();
     let db = db::init_db(&config.mongodb_uri, &config.db_name).await;
 
+    // single state object for dependencies
+    let state = AppState {
+        db: db,
+        config: config,
+    };
+
     // build application
-    let app = routes::create_routes(db, config);
+    let app = routes::create_routes(state);
 
     // run application
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
