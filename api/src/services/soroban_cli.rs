@@ -19,7 +19,7 @@ pub fn invoke(
   ]);
 
   for (key, value) in args {
-    cmd.arg(key).arg(value);
+    cmd.arg(format!("--{}", key)).arg(value);
   }
 
   let output = cmd.output().map_err(|e| e.to_string())?;

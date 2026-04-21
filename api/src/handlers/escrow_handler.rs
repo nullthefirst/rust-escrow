@@ -24,7 +24,7 @@ pub async fn create(
     vec![
       ("escrow_id", escrow.id.clone()),
       ("job_id", payload.job_id),
-      ("payload", (payload.amount as i128).to_string()),
+      ("amount", (payload.amount as i128).to_string()),
     ],
   );
 
